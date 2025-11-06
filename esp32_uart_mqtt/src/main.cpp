@@ -2,6 +2,8 @@
 
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
 #define RXD2 16
 #define TXD2 17
@@ -12,16 +14,16 @@
 //#include <Wire.h>
 
 // Replace the next variables with your SSID/Password combination
-const char* ssid = "knobuntufree";
-const char* password = "Pech_Vogel_free123";
+const char* ssid ;// = "knobuntufree";
+const char* password ;// = "Pech_Vogel_free123";
 
 // Add your MQTT Broker address, example:
-const char* mqtt_server = "192.168.1.140";
-const char* unique_identifier = "knobuntumesh";
+const char* mqtt_server;// = "192.168.1.140";
+const char* unique_identifier; // = "knobuntumesh";
 
-WiFiClient espClient;
-PubSubClient client(espClient);
-HardwareSer.ial mySerial(2);
+ WiFiClient espClient;
+ PubSubClient client(espClient);
+ HardwareSerial mySerial(2);
 // essai d'ajout
 
 
@@ -39,8 +41,41 @@ const int buttonPin = 14;
 void setup_wifi();
 void callback(char* topic, byte* message, unsigned int length);
 
+
+
 void setup() {
   Serial.begin(115200);
+  Serial.print("coucou");
+  //lecture du fichier secret
+  if (!LittleFS.begin(true)){
+    Serial.print( "erreur de lecture littlefs");
+    return;
+
+  }
+  
+  File file =LittleFS.open("/secret.txt","r");
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  String str;
+  JsonDocument doc;
+  while (file.available()){
+   char r=file.read();
+   str +=r;
+  
+  }
+  deserializeJson(doc,str);
+  ssid=doc["ssid"];
+  password=doc["password"];
+  mqtt_server=doc["mqtt_server"];
+  unique_identifier=doc["unique_identifier"];
+  
+  Serial.println(ssid);
+  Serial.println(password);
+  Serial.println(mqtt_server);
+  Serial.println(unique_identifier);
+    
   mySerial.begin(TRANSFERT_BAUD,SERIAL_8N1,RXD2,TXD2);
 
   // default settings
@@ -70,6 +105,8 @@ void setup_wifi() {
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+  
 }
 
 void callback(char* topic, byte* message, unsigned int length) {
@@ -120,6 +157,7 @@ void reconnect() {
 
 
 void loop() {
+
   String mystr;
   const char * jsonstring;
 
@@ -153,6 +191,8 @@ void loop() {
       }
     }    
   }
+
+  
 }
  
       

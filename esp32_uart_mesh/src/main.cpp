@@ -60,7 +60,7 @@ void setup() {
   mesh.setRoot(true);
   // This node and all other nodes should ideally know the mesh contains a root, so call this on all nodes
   mesh.setContainsRoot(true);
-  mesh.stop();
+  
 }  
 
 void loop() {
