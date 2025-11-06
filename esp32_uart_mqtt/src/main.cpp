@@ -1,3 +1,7 @@
+
+
+// programme esp32_uart_mqtt
+
 #include <Arduino.h>
 
 #include <WiFi.h>
@@ -8,7 +12,7 @@
 #define RXD2 16
 #define TXD2 17
 #define TRANSFERT_BAUD 9600
-
+HardwareSerial mySerial(2);
 
 
 //#include <Wire.h>
@@ -23,7 +27,7 @@ const char* unique_identifier; // = "knobuntumesh";
 
  WiFiClient espClient;
  PubSubClient client(espClient);
- HardwareSerial mySerial(2);
+ 
 // essai d'ajout
 
 
@@ -109,31 +113,22 @@ void setup_wifi() {
   
 }
 
-void callback(char* topic, byte* message, unsigned int length) {
-  Serial.print("Message arrived on topic: ");
-  Serial.print(topic);
-  Serial.print(". Message: ");
-  String messageTemp;
-
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)message[i]);
-    messageTemp += (char)message[i];
-  }
-  Serial.println();
-
-  // If a message is received on the topic "SF/LED", you check if the message is either "on" or "off".
-  // Changes the output state according to the message
-  if (String(topic) == "SF/LED") {
-    Serial.print("Changing state to ");
-    if (messageTemp == "on") {
-      Serial.println("on");
-      digitalWrite(ledPin, HIGH);
-    } else if (messageTemp == "off") {
-      Serial.println("off");
-      digitalWrite(ledPin, LOW);
+void callback(char* topic, uint8_t* payload, unsigned int length) {
+  char* cleanPayload = (char*)malloc(length+1);
+  payload[length] = '\0';
+  memcpy(cleanPayload, payload, length+1);
+  String msg = String(cleanPayload);
+  free(cleanPayload);
+  if (strcmp(topic,"esp32/relais")==0){
+    mySerial.println (msg);
+     
+  }else{
+    if (strcmp(topic,"esp32/noeud")==0){
+      mySerial.println (msg);
+    
     }
   }
-}
+ }
 
 void reconnect() {
   // Loop until we're reconnected
@@ -144,6 +139,7 @@ void reconnect() {
       Serial.println("connected");
       // Subscribe
       client.subscribe("esp32/jsonstring");
+      client.subscribe ("esp32/relais");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());

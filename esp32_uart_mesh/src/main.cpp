@@ -12,10 +12,11 @@
 
 #define   STATION_SSID     "knobuntufree"
 #define   STATION_PASSWORD "Pech_Vogel_free123"
+
 #define RXD2 16
 #define TXD2 17
-#define TRANFERT_BAUD 9600
-
+#define TRANSFERT_BAUD 9600
+HardwareSerial mySerial(2);
 
 // Prototypes
 void receivedCallback( const uint32_t &from, const String &msg );
@@ -30,7 +31,7 @@ painlessMesh  mesh;
 WiFiClient wifiClient;
 //PubSubClient mqttClient(mqttBroker, 1883, mqttCallback, wifiClient);
 
-HardwareSerial mySerial(2);
+
 
 const char* topicrelai[4]={"esp/relai0","esp/relai1","esp/relai2","esp/relai3"};
 
@@ -42,7 +43,7 @@ const char* jsonstring =" ";
 void setup() {
   Serial.begin(115200);
 
-  mySerial.begin(TRANFERT_BAUD, SERIAL_8N1, RXD2, TXD2);
+  mySerial.begin(TRANSFERT_BAUD , SERIAL_8N1, RXD2, TXD2);
   Serial.println("Serial 2 started at 9600 baud rate");
 
 
@@ -64,11 +65,23 @@ void setup() {
 }  
 
 void loop() {
+  String mystr;
+  const char * jsonstring;
 
-while (mySerial.available() > 0){
-    // get the byte data from the jsonstring
-    char transfertData =mySerial.read();
-    Serial.print(transfertData);
+
+  if (mySerial.available()>0){
+    mystr=mySerial.readStringUntil('\n');
+    
+    int position = mystr.indexOf("ssr");
+    if(position>-1) {
+     
+      jsonstring=mystr.c_str();
+      mesh.sendBroadcast(jsonstring);
+      Serial.print ("mysr dans ssr decouvert : ");
+      Serial.println(mystr);
+
+    }
+
   }
   delay(1000);
 
@@ -76,27 +89,7 @@ while (mySerial.available() > 0){
 
   mesh.update();
  
-/*
-  mqttClient.loop();
 
-  if (myIP != getlocalIP()) {               //pas d'adresse IP correcte
-    myIP = getlocalIP();                    //mise a jour de l'IP locale
-    if (!mqttClient.connected() ) {         //pas de connexion au Broker 
-       if (mqttClient.connect("wifiClient")) {  //tentative de connexion 
-          // si connexion établie
-          //mqttClient.publish("esp8266/jsonstring","connection");      // envoi une information de connexion via TOPIC
-          mqttClient.subscribe("esp8266/jsonstring"); 
-          mqttClient.subscribe("esp/relai");  
-          mqttClient.subscribe("esp/noeud");             // abonnement au TOPIC esp/relai0 a 3
-          ErreurBroker= false;
-          }
-          else {
-            ErreurBroker= true;
-          }
-      }
-    }
-*/
-  //ajout d'une gestion de la deconnexion.
 
 }
 

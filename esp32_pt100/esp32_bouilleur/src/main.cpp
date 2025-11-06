@@ -20,6 +20,12 @@ String localip;
 #define   MESH_PREFIX     "knobuntumesh"
 #define   MESH_PASSWORD   "pechvogel"
 #define   MESH_PORT       5555
+#define RXD2 16
+#define TXD2 17
+#define TRANSFERT_BAUD 9600
+
+
+
 
 Scheduler userScheduler; // Controluer 
 painlessMesh  mesh;
@@ -31,7 +37,7 @@ float Rpt100; // resistance sonde PT100
 float Tpt100; // temperature sonde PT100
 
 
-
+HardwareSerial mySerial(2);
 
 
 
@@ -109,7 +115,7 @@ void nodeTimeAdjustedCallback(int32_t offset) {
 void setup() {
 
  Serial.begin(115200);
-  
+  mySerial.begin(TRANSFERT_BAUD,SERIAL_8N1,RXD2,TXD2);
  
  Serial.println("pont diviseur");
  Wire.begin();
