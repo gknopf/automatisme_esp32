@@ -33,7 +33,7 @@ WiFiClient wifiClient;
 
 
 
-const char* topicrelai[4]={"esp/relai0","esp/relai1","esp/relai2","esp/relai3"};
+const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
 
 const char* jsonstring =" ";
 
