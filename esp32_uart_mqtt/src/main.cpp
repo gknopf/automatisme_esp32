@@ -18,8 +18,8 @@ HardwareSerial mySerial(2);
 //#include <Wire.h>
 
 // Replace the next variables with your SSID/Password combination
-const char* ssid ;// = "knobuntufree";
-const char* password ;// = "Pech_Vogel_free123";
+const char* ssid ;// = "knobuntulink";
+const char* password ;// = "pechvogel";
 
 // Add your MQTT Broker address, example:
 const char* mqtt_server;// = "192.168.1.140";
@@ -136,10 +136,11 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect(unique_identifier)) {
-      Serial.println("connected");
+      Serial.println("cconnecte au reseau knobuntulink");
       // Subscribe
       client.subscribe("esp32/jsonstring");
       client.subscribe ("esp32/relais");
+      client.publish("esp32","connecte au reseau knobuntutplink sur raspberry 192.168..140");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
