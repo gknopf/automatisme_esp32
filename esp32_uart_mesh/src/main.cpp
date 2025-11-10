@@ -10,13 +10,14 @@
 #define   MESH_PASSWORD   "pechvogel"
 #define   MESH_PORT       5555
 
-#define   STATION_SSID     "knobuntufree"
-#define   STATION_PASSWORD "Pech_Vogel_free123"
+//#define   STATION_SSID     "knobuntufree"
+//#define   STATION_PASSWORD "Pech_Vogel_free123"
+#define   STATION_SSID     "knobuntulink"
+#define   STATION_PASSWORD "pechvogel"
 
 #define RXD2 16
 #define TXD2 17
 #define TRANSFERT_BAUD 9600
-HardwareSerial mySerial(2);
 
 // Prototypes
 void receivedCallback( const uint32_t &from, const String &msg );
@@ -31,6 +32,7 @@ painlessMesh  mesh;
 WiFiClient wifiClient;
 //PubSubClient mqttClient(mqttBroker, 1883, mqttCallback, wifiClient);
 
+HardwareSerial mySerial(2);
 
 
 const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
@@ -65,6 +67,9 @@ void setup() {
 }  
 
 void loop() {
+ 
+
+ 
   String mystr;
   const char * jsonstring;
 
@@ -83,12 +88,23 @@ void loop() {
     }
 
   }
-  delay(1000);
 
+
+/*
+  while (mySerial.available() > 0){
+    // get the byte data from the jsonstring
+    char transfertData =mySerial.read();
+    Serial.print(transfertData);
+  }
+*/
+  Serial.println (ESP.getFreeHeap());
+
+  delay(1000);
 
 
   mesh.update();
  
+
 
 
 }

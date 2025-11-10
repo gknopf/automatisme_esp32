@@ -1,53 +1,55 @@
+
+
+// programme esp32_uart_mqtt
+
 #include <Arduino.h>
 
 #include <WiFi.h>
+#include <painlessMesh.h>
+#include <WiFiClient.h>
 #include <PubSubClient.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
-#define RXD2 16
-#define TXD2 17
-#define TRANSFERT_BAUD 9600
 
 
 
-//#include <Wire.h>
+#define   MESH_PREFIX     "knobuntumesh"
+#define   MESH_PASSWORD   "pechvogel"
+#define   MESH_PORT       5555
 
+// Prototypes
+void receivedCallback( const uint32_t &from, const String &msg );
+void mqttCallback(char* topic, byte* payload, unsigned int length);
+void setup_wifi();
+//void callback(char* topic, byte* message, unsigned int length);
+//
 // Replace the next variables with your SSID/Password combination
-const char* ssid  = "knobuntulink";
-const char* password = "pechvogel";
+const char* ssid ;// = "knobuntulink";
+const char* password ;// = "pechvogel";
 
 // Add your MQTT Broker address, example:
-const char* mqtt_server = "192.168.1.140";
-const char* unique_identifier = "knobuntumesh";
+const char* mqtt_server;// = "192.168.1.140";
+const char* unique_identifier; // = "knobuntumesh";
 
- WiFiClient espClient;
- PubSubClient client(espClient);
- HardwareSerial mySerial(2);
-// essai d'ajout
-
-
-long lastMsg = 0;
-int value = 0;
+painlessMesh  mesh;
+WiFiClient wifiClient;
+PubSubClient mqttClient(mqtt_server, 1883, mqttCallback, wifiClient);
 
 
-// LED Pin
-const int ledPin = 4;
-const int buttonPin = 14;
 
-// When you connect to WIFI, only 36 39 34 35 32 33 pins can be used for analog reading.
-// Define constants
+const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
 
-void setup_wifi();
-void callback(char* topic, byte* message, unsigned int length);
+const char* jsonstring =" ";
+
+
 
 
 
 void setup() {
   Serial.begin(115200);
-  Serial.print("coucou");
+ 
   //lecture du fichier secret
-  /*
   if (!LittleFS.begin(true)){
     Serial.print( "erreur de lecture littlefs");
     return;
@@ -71,21 +73,29 @@ void setup() {
   password=doc["password"];
   mqtt_server=doc["mqtt_server"];
   unique_identifier=doc["unique_identifier"];
-  */
+  
   Serial.println(ssid);
   Serial.println(password);
   Serial.println(mqtt_server);
   Serial.println(unique_identifier);
     
-  mySerial.begin(TRANSFERT_BAUD,SERIAL_8N1,RXD2,TXD2);
 
   // default settings
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setCallback(mqttCallback);
 
-  pinMode(buttonPin, INPUT);
-  pinMode(ledPin, OUTPUT);
+
+  //initialisation mesh
+  mesh.setDebugMsgTypes( ERROR | STARTUP | CONNECTION );  // set before init() so that you can see startup messages
+
+  mesh.init( MESH_PREFIX, MESH_PASSWORD, MESH_PORT, WIFI_AP_STA, 6 );
+  mesh.onReceive(&receivedCallback);
+  mesh.stationManual(ssid, password);
+  mesh.setRoot(true);
+  mesh.setContainsRoot(true);  
+
+ 
 }
 
 void setup_wifi() {
@@ -110,40 +120,50 @@ void setup_wifi() {
   
 }
 
-void callback(char* topic, uint8_t* payload, unsigned int length) {
+//Reception depuis le MESH renvoi vers le MQTT
+void receivedCallback( const uint32_t &from, const String &msg ) {
+  Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
+  String topic = "esp32/jsonstring" ;
+  mqttClient.publish(topic.c_str(), msg.c_str()); //renvoi jsonstring sur node-red
+
+}
+
+void mqttcallback(char* topic, uint8_t* payload, unsigned int length) {
   char* cleanPayload = (char*)malloc(length+1);
   payload[length] = '\0';
   memcpy(cleanPayload, payload, length+1);
   String msg = String(cleanPayload);
   free(cleanPayload);
-   Serial.println (msg);
   if (strcmp(topic,"esp32/relais")==0){
-    mySerial.println (msg);
-   
+    mesh.sendBroadcast(msg);
      
   }else{
     if (strcmp(topic,"esp32/noeud")==0){
-      mySerial.println (msg);
-    
-    }
+      String noeudsjson=mesh.subConnectionJson();
+       auto nodes = mesh.getNodeList(true);
+      String str;
+      for (auto &&id : nodes){
+        str += String(id) + String(" \r\n");
+      }    
+      mqttClient.publish("esp32/noeud",noeudsjson.c_str(),sizeof(noeudsjson) );
+    } 
   }
  }
 
-
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(unique_identifier)) {
+    if (mqttClient.connect(unique_identifier)) {
       Serial.println("cconnecte au reseau knobuntulink");
       // Subscribe
-      client.subscribe("esp32/jsonstring");
-      client.subscribe ("esp32/relais");
-      client.publish("esp32","connecte au reseau knobuntutplink sur raspberry 192.168..140");
+      mqttClient.subscribe("esp32/jsonstring");
+      mqttClient.subscribe ("esp32/relais");
+      mqttClient.publish("esp32","connecte au reseau knobuntutplink sur raspberry 192.168..140");
     } else {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(mqttClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -152,17 +172,18 @@ void reconnect() {
 }
 
 
+
 void loop() {
 
   String mystr;
   const char * jsonstring;
 
 
-  if (!client.connected()) {
+  if (!mqttClient.connected()) {
     reconnect();
   }
  
-  client.loop();
+  mqttClient.loop();
   if (mySerial.available()>0){
     mystr=mySerial.readStringUntil('\n');
     
@@ -191,3 +212,5 @@ void loop() {
   
 }
  
+      
+
