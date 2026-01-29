@@ -35,7 +35,7 @@ WiFiClient wifiClient;
 HardwareSerial mySerial(2);
 
 
-const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
+//const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
 
 const char* jsonstring =" ";
 
@@ -73,7 +73,10 @@ void loop() {
   String mystr;
   const char * jsonstring;
 
-
+//diffusion des valeurs de reais vers les esp
+//sens mesh vers programme bouilleur et relais
+//format du message json {"ssr0":1 "ssr1":0 "ssr2": ..... "ssr5":0}
+//ssr5 et 6 activent bouilleur
   if (mySerial.available()>0){
     mystr=mySerial.readStringUntil('\n');
     
@@ -90,13 +93,7 @@ void loop() {
   }
 
 
-/*
-  while (mySerial.available() > 0){
-    // get the byte data from the jsonstring
-    char transfertData =mySerial.read();
-    Serial.print(transfertData);
-  }
-*/
+
   Serial.println (ESP.getFreeHeap());
 
   delay(1000);
@@ -111,52 +108,17 @@ void loop() {
 
 
 //Reception depuis le MESH renvoi vers le MQTT
+//renvoi via myserial vers esp32_uart_mqtt
+//message de la forme  "esp32/jsonstring{"recepteur":"bouilleur", "PT100":[12.4,13.6,25.4]......}
 void receivedCallback( const uint32_t &from, const String &msg ) {
   Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
   String topic = "esp32/jsonstring" ;
   mySerial.printf("esp32/jsonstring%s\n",msg.c_str());
   Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
 
- // mqttClient.publish(topic.c_str(), msg.c_str()); //renvoi jsonstring sur node-red
 
 }
 
-
-//************************************************************************************
-
-//  Cette fonction va renvoyer sur le MESH les messages en provenance du BRIDGE
-
-//************************************************************************************
-
-/*
-void mqttCallback(char* topic, uint8_t* payload, unsigned int length) {
- 
-  char* cleanPayload = (char*)malloc(length+1);
-  payload[length] = '\0';
-  memcpy(cleanPayload, payload, length+1);
-  String msg = String(cleanPayload);
-  free(cleanPayload);
-  if (strcmp(topic,"esp/relai")==0){
-     mesh.sendBroadcast(msg);
- 
-  }else{
-    if (strcmp(topic,"esp/noeud")==0){
-     String noeudsjson=mesh.subConnectionJson();
-    
-     
-      auto nodes = mesh.getNodeList(true);
-      String str;
-      for (auto &&id : nodes){
-        str += String(id) + String(" \r\n");
-      }    
-   
-    mqttClient.publish("esp/noeud",noeudsjson.c_str(),sizeof(noeudsjson) );
-    }
-  }
-   
-}
-
-*/
 
 IPAddress getlocalIP() {
   return IPAddress(mesh.getStationIP());

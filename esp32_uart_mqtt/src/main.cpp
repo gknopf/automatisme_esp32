@@ -183,11 +183,16 @@ void loop() {
           String  substr=mystr.substring(16);
           jsonstring=substr.c_str();
           client.publish("esp32/bassin", jsonstring);     
-        } 
+        } else{
+          int position = mystr.indexOf("shunt");
+          if(position>-1) {
+            String  substr=mystr.substring(16);
+            jsonstring=substr.c_str();
+            client.publish("esp32/shunt", jsonstring);     
+          }
+        }
       }
     }    
-  }
-
-  
+  }  
 }
  
