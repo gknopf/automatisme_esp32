@@ -21,9 +21,9 @@
 
 // Prototypes
 void receivedCallback( const uint32_t &from, const String &msg );
-//void mqttCallback(char* topic, byte* payload, unsigned int length);
 
-IPAddress getlocalIP();
+
+//IPAddress getlocalIP();
 
 IPAddress myIP(0,0,0,0);
 IPAddress mqttBroker(192, 168, 1, 140);
@@ -35,9 +35,9 @@ WiFiClient wifiClient;
 HardwareSerial mySerial(2);
 
 
-//const char* topicrelai[4]={"ssr0","ssr1","ssr2","ssr3"};
 
-const char* jsonstring =" ";
+
+//const char* jsonstring =" ";
 
 
 
@@ -88,6 +88,16 @@ void loop() {
       Serial.print ("mysr dans ssr decouvert : ");
       Serial.println(mystr);
 
+    }else{
+      int position = mystr.indexOf("coef");
+      if(position>-1) {
+     
+        jsonstring=mystr.c_str();
+        mesh.sendBroadcast(jsonstring);
+        Serial.print ("renvoi des coef: ");
+        Serial.println(mystr);
+
+      }
     }
 
   }
@@ -111,7 +121,7 @@ void loop() {
 //renvoi via myserial vers esp32_uart_mqtt
 //message de la forme  "esp32/jsonstring{"recepteur":"bouilleur", "PT100":[12.4,13.6,25.4]......}
 void receivedCallback( const uint32_t &from, const String &msg ) {
-  Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
+  //Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
   String topic = "esp32/jsonstring" ;
   mySerial.printf("esp32/jsonstring%s\n",msg.c_str());
   Serial.printf("Mosquitto Received from %u msg=%s\n", from, msg.c_str());
@@ -120,6 +130,6 @@ void receivedCallback( const uint32_t &from, const String &msg ) {
 }
 
 
-IPAddress getlocalIP() {
-  return IPAddress(mesh.getStationIP());
-}
+//IPAddress getlocalIP() {
+//  return IPAddress(mesh.getStationIP());
+//}

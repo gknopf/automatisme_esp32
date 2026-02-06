@@ -125,9 +125,13 @@ void callback(char* topic, uint8_t* payload, unsigned int length) {
     if (strcmp(topic,"esp32/noeud")==0){
       mySerial.println (msg);
     
+    }else{
+       if (strcmp(topic,"esp32/coef")==0){
+      mySerial.println (msg);
     }
   }
  }
+}
 
 
 void reconnect() {
@@ -173,22 +177,27 @@ void loop() {
       client.publish("esp32/sonnenkraft", jsonstring);
     } else{
       int position = mystr.indexOf("bouilleur");
-      if(position>-1) {
+      if(position>-1) { //tag bouilleur present
         String  substr=mystr.substring(16);
         jsonstring=substr.c_str();
         client.publish("esp32/bouilleur", jsonstring);
       }else{
         int position = mystr.indexOf("bassin");
-        if(position>-1) {
+        if(position>-1) { // tag bassin present
           String  substr=mystr.substring(16);
           jsonstring=substr.c_str();
           client.publish("esp32/bassin", jsonstring);     
         } else{
           int position = mystr.indexOf("shunt");
-          if(position>-1) {
+          if(position>-1) { //tag  shunt present
             String  substr=mystr.substring(16);
             jsonstring=substr.c_str();
-            client.publish("esp32/shunt", jsonstring);     
+            client.publish("esp32/shunt", jsonstring);
+            int positioncoef =mystr.indexOf("coef");
+            if (positioncoef>-1){
+              //les tag coef  et shunt sont present 
+              client.publish("esp32/coef/shunt",jsonstring);
+            }    
           }
         }
       }
