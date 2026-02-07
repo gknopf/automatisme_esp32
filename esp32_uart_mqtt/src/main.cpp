@@ -116,6 +116,13 @@ void callback(char* topic, uint8_t* payload, unsigned int length) {
   memcpy(cleanPayload, payload, length+1);
   String msg = String(cleanPayload);
   free(cleanPayload);
+  mySerial.println (msg);
+    
+
+
+
+/*
+
    Serial.println (msg);
   if (strcmp(topic,"esp32/relais")==0){
     mySerial.println (msg);
@@ -126,11 +133,18 @@ void callback(char* topic, uint8_t* payload, unsigned int length) {
       mySerial.println (msg);
     
     }else{
-       if (strcmp(topic,"esp32/coef")==0){
-      mySerial.println (msg);
+      if (strcmp(topic,"esp32/coef/shunt")==0){
+        mySerial.println (msg);
+      } else{
+        if (strcmp(topic,"esp32/coef/bouilleur")==0){
+          mySerial.println (msg);
+        }
+     }
     }
   }
  }
+
+ */
 }
 
 
@@ -144,7 +158,8 @@ void reconnect() {
       // Subscribe
       client.subscribe("esp32/jsonstring");
       client.subscribe ("esp32/relais");
-      client.publish("esp32","connecte au reseau knobuntutplink sur raspberry 192.168..140");
+      client.subscribe("esp32/#");
+      //client.publish("esp32","connecte au reseau knobuntutplink sur raspberry 192.168..140");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -193,11 +208,8 @@ void loop() {
             String  substr=mystr.substring(16);
             jsonstring=substr.c_str();
             client.publish("esp32/shunt", jsonstring);
-            int positioncoef =mystr.indexOf("coef");
-            if (positioncoef>-1){
-              //les tag coef  et shunt sont present 
-              client.publish("esp32/coef/shunt",jsonstring);
-            }    
+            
+            
           }
         }
       }

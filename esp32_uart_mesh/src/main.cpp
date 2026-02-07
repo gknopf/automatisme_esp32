@@ -79,7 +79,10 @@ void loop() {
 //ssr5 et 6 activent bouilleur
   if (mySerial.available()>0){
     mystr=mySerial.readStringUntil('\n');
-    
+    jsonstring=mystr.c_str();
+    mesh.sendBroadcast(jsonstring);
+
+    /*
     int position = mystr.indexOf("ssr");
     if(position>-1) {
      
@@ -99,7 +102,7 @@ void loop() {
 
       }
     }
-
+*/
   }
 
 

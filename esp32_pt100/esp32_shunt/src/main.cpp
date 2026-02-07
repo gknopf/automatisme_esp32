@@ -90,13 +90,13 @@ void sendMessage();  //prototype
 
 Task taskSendMessage( TASK_SECOND * 5 , TASK_FOREVER, &sendMessage ); //esecute la lecture des temperatures toutes les 5 secondes
 
-
+/*
 void recuperation_coef_ajustement(){;
   
   JsonDocument doc;
   String jsonstringP;
   //verifie si les coefficients d'ajustements sont définis
-  if(transfert_coef==0){  // seulement dans le cas ou le transfert n'a pas encore ete demande
+ 
     doc["recepteur"] ="shunt";
     doc["coef"]="demandecoef";
     serializeJson(doc,jsonstringP);
@@ -104,9 +104,8 @@ void recuperation_coef_ajustement(){;
     Serial.println(jsonstringP);
     transfert_coef=1; // etat intermediaire en attente de reception
 
-  }
 }
-
+*/
 float tension_batterie(){
 //vs= ve(r4/(r4+v3)
 //ve=vs(1+r3/r4)
@@ -160,17 +159,17 @@ void sendMessage() {
   String jsonstringP;
   Serial.println("sendmessage"); 
   sprintf(txt,"%1f",tension_batterie());
-  doc["tension_batterie"] = txt;
+  doc["Ubat"] = txt;
   
   sprintf(txt,"%1f",shunt_batterie());
-  doc["intensite_batterie"]=txt;
+  doc["shunt"]=txt;
   sprintf(txt,"%1f",zmpt101b_ac());
-  doc["tension_AC"]=txt;
+  doc["Uac"]=txt;
   sprintf(txt,"%1f",intensite_ac());
-  doc["intensite_AC"]=txt;
+  doc["Iac"]=txt;
   sprintf(txt,"%1f",tension_batterie());
-  doc["transfert_coef"]=transfert_coef;
- 
+  doc["tcoef"]=transfert_coef;
+  
   serializeJson(doc,jsonstringP);
   mesh.sendBroadcast(jsonstringP);
   Serial.println(jsonstringP);
@@ -188,10 +187,10 @@ void receivedCallback( uint32_t from, String &msg ) {
   if (doc["recepteur"]=="shunt"){
     if (doc["coef"]=="envoicoef"){
       coef_shunt=doc["coef_shunt"];
-      coef_tension_AC=doc["coef_tension_AC"];
-      coef_tension_batterie=doc["coef_tension_batterie"];
-      coef_sct013=doc["coefsct13"];
-      transfert_coef=2; //reception des coef
+      coef_tension_AC=doc["coef_Iac"];
+      coef_tension_batterie=doc["coef_Ubat"];
+      coef_sct013=doc["coef_Iac"];
+      transfert_coef=2;
     }
  }
 
@@ -231,7 +230,7 @@ mesh.onNodeTimeAdjusted(&nodeTimeAdjustedCallback);
 userScheduler.addTask(taskSendMessage);
 taskSendMessage.enable();
 
-recuperation_coef_ajustement();
+
 delay(2000);
 
 
