@@ -24,7 +24,7 @@ float E = 5.0; //volts
 int R1 = 138; // ohm
 float Rpt100; // resistance sonde PT100
 float Tpt100; // temperature sonde PT100
-
+float coef_sk[3];
 Scheduler userScheduler; // Controluer 
 painlessMesh  mesh;
 
@@ -48,9 +48,10 @@ void sendMessage() {
   for(int i=0;i<4; i++){ 
     int16_t mesure_Tp100=ADS.readADC(i);
     float tension=ADS.toVoltage(mesure_Tp100);
-    Rpt100 = tension*R1/(E-tension);
-    Tpt100 = (Rpt100-100)/0.385;
-    PT100.add(Tpt100); 
+    Rpt100 = tension*R1/(E-tension); //pont diviseur de tension
+    Tpt100 = (Rpt100-100)/0.385; //courbe de tempertature simplifiee R= (100*(1+3.85*10^-3 T))
+    float Tcorr=Tpt100*coef_sk[i];
+    PT100.add(Tcorr); 
     
   } 
  
@@ -64,10 +65,18 @@ void sendMessage() {
 
 
 void receivedCallback( uint32_t from, String &msg ) {
- //activation  des relais
- JsonDocument doc;
- deserializeJson (doc,msg.c_str());
- 
+ //reception des coefs
+  JsonDocument doc;
+  deserializeJson (doc,msg.c_str());
+  //recuperation des varibles d'ajustement
+if (doc["recepteur"]=="Sonnenkraft"){
+  if (doc["coef"]=="envoicoef"){
+    coef_sk[0]=doc["coef_sk0"];
+    coef_sk[1]=doc["coef_sk1"];
+    coef_sk[2]=doc["coef_sk2"];
+    coef_sk[3]=doc["coef_sk3"];
+  }     
+ }
 }
 
 void newConnectionCallback(uint32_t nodeId) {

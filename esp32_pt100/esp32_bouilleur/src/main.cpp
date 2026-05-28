@@ -40,6 +40,7 @@ float Rpt100; // resistance sonde PT100
 float Tpt100; // temperature sonde PT100
 int etat_relais[2];
 int broches_relais[2]={12,13};
+float coef_bouilleur[3]; //0: coef_EF, 1:coef_EC 2:coef_press 3: non attribue
 
 
 HardwareSerial mySerial(2);
@@ -111,7 +112,8 @@ void sendMessage() {
     float tension=ADS.toVoltage(mesure_Tp100);
     Rpt100 = tension*R1/(E-tension);
     Tpt100 = (Rpt100-100)/0.385;
-    PT100.add(Tpt100); 
+    float Tcorr=Tpt100*coef_bouilleur[i];
+    PT100.add(Tcorr); 
     
   } 
 
@@ -121,7 +123,8 @@ void sendMessage() {
     // pression 10 bar filletage 1/4"
     //10bars-->5v ---- 1bar -->0.5v
     float pression_bar = tension/10;
-    PRESSION.add(pression_bar); 
+    float Pcorr=pression_bar*coef_bouilleur[1]; //coef_press
+    PRESSION.add(Pcorr); 
     
   } 
 
@@ -152,6 +155,16 @@ void receivedCallback( uint32_t from, String &msg ) {
     String str="ssr1 etatrelais:1";
     mesh.sendBroadcast(str);
   }
+// ajustement des coefs
+  if (doc["recepteur"]=="bouilleur"){
+    if (doc["coef"]=="envoicoef"){  
+      coef_bouilleur[0]=doc["coef_EC"];
+      coef_bouilleur[1]=doc["coef_EF"];
+      coef_bouilleur[2]=doc["coef_press"];
+    }     
+  }
+
+ 
 
 }
 
